@@ -1,4 +1,5 @@
 {
     "nodeID": "1",
+    "destinationNodeID": "2",
     "managerAPIURL": "http://localhost:8080"
 }

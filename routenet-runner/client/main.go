@@ -40,19 +40,20 @@ func main() {
 		os.Exit(0)
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/check", strings.TrimSuffix(cfg.ManagerAPIURL, "/")), nil)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/check", strings.TrimSuffix(cfg.ManagerAPIURL, "/")), nil)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
 	}
 	q := req.URL.Query()
 	q.Add("from", cfg.NodeID)
-	q.Add("to", "2")
+	q.Add("to", cfg.DestinationNodeID)
 	q.Add("averageBandwidth", averageBandwidth)
 	q.Add("maxDelay", maxDelay)
 	q.Add("maxLosses", maxLosses)
 	req.URL.RawQuery = q.Encode()
 
+	fmt.Println("New request: flow from", cfg.NodeID, "to", cfg.DestinationNodeID, "with averageBandwidth", averageBandwidth, "maxDelay", maxDelay, "maxLosses", maxLosses)
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
@@ -64,6 +65,10 @@ func main() {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
 	if resp.StatusCode != http.StatusOK {
 		var errResp errorResponse
 		err = json.Unmarshal(body, &errResp)
@@ -71,21 +76,21 @@ func main() {
 			fmt.Println("The flow check failed, and the error response couldn't be parsed", err)
 			os.Exit(0)
 		}
-		fmt.Println("The flow check failed, will accept flow:", errResp.Error)
+		fmt.Println("Response: flow check failed, will accept flow:", errResp.Error)
 		os.Exit(0)
 	}
 
 	var checkResp checkResponse
 	err = json.Unmarshal(body, &checkResp)
 	if err != nil {
-		fmt.Println("The flow check succeded, but the response couldn't be parsed", err)
+		fmt.Println("Response: flow check succeded, but the response couldn't be parsed", err)
 		os.Exit(0)
 	}
 	if !checkResp.Ok {
-		fmt.Println("The flow check succeded, but the response was not ok")
+		fmt.Println("Response: flow check succeded, but the response was not ok")
 		os.Exit(1)
 	}
-	fmt.Println("The flow check succeded, will accept flow")
+	fmt.Println("Response: flow check succeded, will accept flow")
 	os.Exit(0)
 }
 

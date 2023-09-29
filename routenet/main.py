@@ -9,8 +9,8 @@ from models.delay_model import RouteNet_Fermi as routenet_delay
 from models.jitter_model import RouteNet_Fermi as routenet_jitter
 from models.loss_model import RouteNet_Fermi as routenet_loss
 
-if len(sys.argv) != 3:
-    print("usage: main.py <type (delay, jitter or losses)> <traffic_matrix>")
+if len(sys.argv) != 4:
+    print("usage: main.py <type (delay, jitter or losses)> <traffic_matrix> <links_bandwidth>")
     sys.exit()
 
 model = routenet_delay()
@@ -45,36 +45,17 @@ for f in os.listdir(cp_folder):
                 best_mre = mre
 model.load_weights(os.path.join(cp_folder, best))
 
-# traffic_matrix = json.loads(sys.argv[2])
+traffic_matrix = json.loads(sys.argv[2])
+bandwidth = int(sys.argv[3])
 # #Make predictions
-# ds_test = input_fn(
-#     MG=[
-#         [0,0,2000,0],
-#         [0,0,2000,0],
-#         [2000,2000,0,2000],
-#         [0,0,2000,0]
-#     ],
-#     MT=traffic_matrix,
-#     MR=[
-#         [[0]    ,[0,2,1],[0,2],[0,2,3]],
-#         [[1,2,0],[1]    ,[1,2],[1,2,3]],
-#         [[2,0]  ,[2,1]  ,[2]  ,[2,3]  ],
-#         [[3,2,0],[3,2,1],[3,2],[3]    ],
-#     ]
-# )
 ds_test = input_fn(
     MG=[
-        [0,0,2000,0],
-        [0,0,2000,0],
-        [2000,2000,0,2000],
-        [0,0,2000,0]
+        [0,0,bandwidth,0],
+        [0,0,bandwidth,0],
+        [bandwidth,bandwidth,0,bandwidth],
+        [0,0,bandwidth,0]
     ],
-    MT=[
-        [0,0,1000,1000],
-        [0,0,0,0],
-        [0,0,0,0],
-        [0,0,0,0]
-    ],
+    MT=traffic_matrix,
     MR=[
         [[0]    ,[0,2,1],[0,2],[0,2,3]],
         [[1,2,0],[1]    ,[1,2],[1,2,3]],

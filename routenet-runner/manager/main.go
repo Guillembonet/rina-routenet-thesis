@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -10,7 +11,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var flagLinkBandwidth = flag.Int("link-bandwidth", 2000, "link bandwidth in bps")
+
+var trafficMatrix = [][]float64{
+	{0, 0, 0, 0},
+	{0, 0, 0, 0},
+	{0, 0, 0, 0},
+	{0, 0, 0, 0},
+}
+
 func main() {
+	flag.Parse()
 	g := gin.New()
 	g.POST("/check", func(c *gin.Context) {
 		fmt.Println("received check request")
@@ -39,14 +50,18 @@ func main() {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		ok, err := checkFlow(from, to, averageBandwidth, maxDelay, maxLosses)
+		prevBandwidth := trafficMatrix[from][to]
+		trafficMatrix[from][to] = averageBandwidth
+		ok, err := checkFlow(maxDelay, maxLosses)
 		if err != nil {
+			trafficMatrix[from][to] = prevBandwidth
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 		if ok {
 			c.JSON(200, gin.H{"ok": true})
 		} else {
+			trafficMatrix[from][to] = prevBandwidth
 			c.JSON(200, gin.H{"ok": false})
 		}
 	})
@@ -58,20 +73,13 @@ func main() {
 
 }
 
-func checkFlow(from, to int, averageBandwidth float64, maxDelay, maxLosses float64) (bool, error) {
-	trafficMatrix := [][]float64{
-		{0, 0, 0, 0},
-		{0, 0, 0, 0},
-		{0, 0, 0, 0},
-		{0, 0, 0, 0},
-	}
-	trafficMatrix[from][to] = averageBandwidth
+func checkFlow(maxDelay, maxLosses float64) (bool, error) {
 	trafficMatrixJson, err := json.Marshal(trafficMatrix)
 	if err != nil {
 		return false, fmt.Errorf("error marshalling traffic matrix: %v", err)
 	}
 	if maxDelay >= 0 {
-		out, err := exec.Command("sudo", "docker", "exec", "-w", "/home", "routenet", "python", "/home/main.py", "delay", string(trafficMatrixJson)).Output()
+		out, err := exec.Command("sudo", "docker", "exec", "-w", "/home", "routenet", "python", "/home/main.py", "delay", string(trafficMatrixJson), fmt.Sprint(*flagLinkBandwidth)).Output()
 		if err != nil {
 			return false, fmt.Errorf("error executing delay check: %v", err)
 		}
