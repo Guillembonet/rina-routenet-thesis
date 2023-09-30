@@ -1,1 +1,1 @@
-go build -o routenet ./client/main.go
+go build -o routenet.client ./client/main.go

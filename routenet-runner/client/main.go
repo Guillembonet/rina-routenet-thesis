@@ -40,6 +40,16 @@ func main() {
 		os.Exit(0)
 	}
 
+	if averageBandwidth == "0" {
+		averageBandwidth = fmt.Sprint(cfg.DefaultBandwidth)
+	}
+	if maxDelay == "0" {
+		maxDelay = fmt.Sprint(cfg.DefaultMaxDelay)
+	}
+	if maxLosses == "10000" {
+		maxLosses = fmt.Sprint(cfg.DefaultMaxLosses)
+	}
+
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/check", strings.TrimSuffix(cfg.ManagerAPIURL, "/")), nil)
 	if err != nil {
 		fmt.Println(err)

@@ -1,1 +1,1 @@
-go build -o routenet ./dummy/main.go
+go build -o routenet.dummy ./dummy/main.go

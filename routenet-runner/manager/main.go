@@ -23,54 +23,60 @@ var trafficMatrix = [][]float64{
 func main() {
 	flag.Parse()
 	g := gin.New()
-	g.POST("/check", func(c *gin.Context) {
-		fmt.Println("received check request")
-		from, err := strconv.Atoi(c.Query("from"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		to, err := strconv.Atoi(c.Query("to"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		averageBandwidth, err := strconv.ParseFloat(c.Query("averageBandwidth"), 64)
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		maxDelay, err := strconv.ParseFloat(c.Query("maxDelay"), 64)
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		maxLosses, err := strconv.ParseFloat(c.Query("maxLosses"), 64)
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		prevBandwidth := trafficMatrix[from][to]
-		trafficMatrix[from][to] = averageBandwidth
-		ok, err := checkFlow(maxDelay, maxLosses)
-		if err != nil {
-			trafficMatrix[from][to] = prevBandwidth
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		if ok {
-			c.JSON(200, gin.H{"ok": true})
-		} else {
-			trafficMatrix[from][to] = prevBandwidth
-			c.JSON(200, gin.H{"ok": false})
-		}
-	})
+	g.Any("/check", handler)
 
 	err := g.Run(":8080")
 	if err != nil {
 		fmt.Println(err)
 	}
 
+}
+
+func handler(c *gin.Context) {
+	fmt.Println("received check request")
+	from, err := strconv.Atoi(c.Query("from"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	to, err := strconv.Atoi(c.Query("to"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	averageBandwidth, err := strconv.ParseFloat(c.Query("averageBandwidth"), 64)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	if averageBandwidth == 0 {
+		c.JSON(200, gin.H{"ok": true})
+		return
+	}
+	maxDelay, err := strconv.ParseFloat(c.Query("maxDelay"), 64)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	maxLosses, err := strconv.ParseFloat(c.Query("maxLosses"), 64)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	prevBandwidth := trafficMatrix[from][to]
+	trafficMatrix[from][to] = averageBandwidth
+	ok, err := checkFlow(maxDelay, maxLosses)
+	if err != nil {
+		trafficMatrix[from][to] = prevBandwidth
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	if ok {
+		c.JSON(200, gin.H{"ok": true})
+	} else {
+		trafficMatrix[from][to] = prevBandwidth
+		c.JSON(200, gin.H{"ok": false})
+	}
 }
 
 func checkFlow(maxDelay, maxLosses float64) (bool, error) {
@@ -107,7 +113,7 @@ func checkFlow(maxDelay, maxLosses float64) (bool, error) {
 	}
 
 	if maxLosses >= 0 {
-		out, err := exec.Command("sudo", "docker", "exec", "-w", "/home", "routenet", "python", "/home/main.py", "losses", string(trafficMatrixJson)).Output()
+		out, err := exec.Command("sudo", "docker", "exec", "-w", "/home", "routenet", "python", "/home/main.py", "losses", string(trafficMatrixJson), fmt.Sprint(*flagLinkBandwidth)).Output()
 		if err != nil {
 			return false, fmt.Errorf("error executing losses check: %v", err)
 		}

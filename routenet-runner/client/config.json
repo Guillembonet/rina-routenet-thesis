@@ -1,5 +1,8 @@
 {
     "nodeID": "1",
     "destinationNodeID": "2",
+    "defaultBandwidth": 2000,
+    "defaultMaxDelay": 100,
+    "defaultMaxLosses": 0.1,
     "managerAPIURL": "http://localhost:8080"
 }
