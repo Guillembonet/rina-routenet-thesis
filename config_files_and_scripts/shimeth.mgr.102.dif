@@ -1,0 +1,6 @@
+{
+    "configParameters": {
+        "interface-name": "enp0s9"
+    }, 
+    "difType": "shim-eth-vlan"
+}

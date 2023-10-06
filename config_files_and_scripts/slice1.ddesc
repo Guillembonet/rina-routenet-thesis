@@ -1,0 +1,34 @@
+{
+  "dif_name" : "slice1",
+  "dif_type" : "normal-ipc",
+  "ipcps" : [ {
+    "system_name" : "mgr",
+    "dif_template" : "slice1.dif",
+    "registrations" : ["NMS"]
+  }, {
+    "system_name" : "system1",
+    "dif_template" : "slice1.dif",
+    "registrations" : ["NMS"],
+    "neighbors" : [ {
+       "ipcp_name" : "mgr.slice1",
+       "under_dif" : "NMS"
+    } ]
+  }, {
+    "system_name" : "system2",
+    "dif_template" : "slice1.dif",
+    "registrations" : ["NMS"],
+    "neighbors" : [ {
+       "ipcp_name" : "mgr.slice1",
+       "under_dif" : "NMS"
+    } ]
+  }, {
+    "system_name" : "system4",
+    "dif_template" : "slice1.dif",
+    "registrations" : ["NMS"],
+    "neighbors" : [ {
+       "ipcp_name" : "mgr.slice1",
+       "under_dif" : "NMS"
+    } ]
+  }
+  ]
+}
